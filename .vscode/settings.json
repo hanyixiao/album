@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "stb_image.h": "c",
+        "stdio.h": "c",
+        "arm_neon.h": "c",
+        "limits.h": "c",
+        "stdint.h": "c",
+        "cstdint": "c",
+        "lcd.h": "c"
+    }
+}
