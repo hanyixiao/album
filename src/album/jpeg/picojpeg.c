@@ -1,24 +1,24 @@
 //------------------------------------------------------------------------------
 // picojpeg.c v1.1 - Public domain, Rich Geldreich <richgel99@gmail.com>
 // Nov. 27, 2010 - Initial release
-// Feb. 9, 2013 - Added H1V2/H2V1 support, cleaned up macros, signed shift fixes
+// Feb. 9, 2013 - Added H1V2/H2V1 support, cleaned up macros, signed shift fixes 
 // Also integrated and tested changes from Chris Phoenix <cphoenix@gmail.com>.
 //------------------------------------------------------------------------------
 #include "picojpeg.h"
+#include "stdint.h"
 //------------------------------------------------------------------------------
-/* clang-format off */
 // Set to 1 if right shifts on signed ints are always unsigned (logical) shifts
 // When 1, arithmetic right shifts will be emulated by using a logical shift
 // with special case code to ensure the sign bit is replicated.
-#define PJPG_RIGHT_SHIFT_IS_ALWAYS_UNSIGNED 1
+#define PJPG_RIGHT_SHIFT_IS_ALWAYS_UNSIGNED 0
 
 // Define PJPG_INLINE to "inline" if your C compiler supports explicit inlining
 #define PJPG_INLINE
 //------------------------------------------------------------------------------
-typedef unsigned char   uint8;
-typedef unsigned short  uint16;
-typedef signed char     int8;
-typedef signed short    int16;
+typedef uint8_t  uint8;
+typedef uint16_t  uint16;
+typedef int8_t  int8;
+typedef int16_t int16;
 //------------------------------------------------------------------------------
 #if PJPG_RIGHT_SHIFT_IS_ALWAYS_UNSIGNED
 static int16 replicateSignBit16(int8 n)
@@ -212,7 +212,9 @@ static uint8 gMaxMCUXSize;
 static uint8 gMaxMCUYSize;
 static uint16 gMaxMCUSPerRow;
 static uint16 gMaxMCUSPerCol;
-static uint16 gNumMCUSRemaining;
+
+static uint16 gNumMCUSRemainingX, gNumMCUSRemainingY;
+
 static uint8 gMCUOrg[6];
 
 static pjpeg_need_bytes_callback_t g_pNeedBytesCallback;
@@ -1197,7 +1199,10 @@ static uint8 initFrame(void)
    gMaxMCUSPerRow = (gImageXSize + (gMaxMCUXSize - 1)) >> ((gMaxMCUXSize == 8) ? 3 : 4);
    gMaxMCUSPerCol = (gImageYSize + (gMaxMCUYSize - 1)) >> ((gMaxMCUYSize == 8) ? 3 : 4);
    
-   gNumMCUSRemaining = gMaxMCUSPerRow * gMaxMCUSPerCol;
+   // This can overflow on large JPEG's.
+   //gNumMCUSRemaining = gMaxMCUSPerRow * gMaxMCUSPerCol;
+   gNumMCUSRemainingX = gMaxMCUSPerRow;
+   gNumMCUSRemainingY = gMaxMCUSPerCol;
    
    return 0;
 }
@@ -1208,7 +1213,7 @@ static uint8 initFrame(void)
 
 #define PJPG_DCT_SCALE (1U << PJPG_DCT_SCALE_BITS)
 
-#define PJPG_DESCALE(x) PJPG_ARITH_SHIFT_RIGHT_N_16(((x) + (1U << (PJPG_DCT_SCALE_BITS - 1))), PJPG_DCT_SCALE_BITS)
+#define PJPG_DESCALE(x) PJPG_ARITH_SHIFT_RIGHT_N_16(((x) + (1 << (PJPG_DCT_SCALE_BITS - 1))), PJPG_DCT_SCALE_BITS)
 
 #define PJPG_WFIX(x) ((x) * PJPG_DCT_SCALE + 0.5f)
 
@@ -1713,6 +1718,25 @@ static void copyY(uint8 dstOfs)
 }
 /*----------------------------------------------------------------------------*/
 // Cb convert to RGB and accumulate
+// static void convertCb(uint8 dstOfs)
+// {
+//    uint8 i;
+//    uint8* pDstG = gMCUBufG + dstOfs;
+//    uint8* pDstB = gMCUBufB + dstOfs;
+//    int16* pSrc = gCoeffBuf;
+
+//    for (i = 64; i > 0; i--)
+//    {
+//       uint8 cb = (uint8)*pSrc++;
+//       int16 cbG, cbB;
+
+//       cbG = ((cb * 88U) >> 8U) - 44U;
+//       *pDstG++ = subAndClamp(pDstG[0], cbG);
+
+//       cbB = (cb + ((cb * 198U) >> 8U)) - 227U;
+//       *pDstB++ = addAndClamp(pDstB[0], cbB);
+//    }
+// }// Cb convert to RGB and accumulate
 static void convertCb(uint8 dstOfs)
 {
    uint8 i;
@@ -1737,6 +1761,7 @@ static void convertCb(uint8 dstOfs)
 }
 /*----------------------------------------------------------------------------*/
 // Cr convert to RGB and accumulate
+// Cr convert to RGB and accumulate
 static void convertCr(uint8 dstOfs)
 {
    uint8 i;
@@ -1759,6 +1784,7 @@ static void convertCr(uint8 dstOfs)
       ++pDstG;
       }
 }
+/*--
 /*----------------------------------------------------------------------------*/
 static void transformBlock(uint8 mcuBlock)
 {
@@ -2268,14 +2294,20 @@ unsigned char pjpeg_decode_mcu(void)
    if (gCallbackStatus)
       return gCallbackStatus;
    
-   if (!gNumMCUSRemaining)
+   if ((!gNumMCUSRemainingX) && (!gNumMCUSRemainingY))
       return PJPG_NO_MORE_BLOCKS;
-      
+         
    status = decodeNextMCU();
    if ((status) || (gCallbackStatus))
       return gCallbackStatus ? gCallbackStatus : status;
       
-   gNumMCUSRemaining--;
+   gNumMCUSRemainingX--;
+   if (!gNumMCUSRemainingX)
+   {
+      gNumMCUSRemainingY--;
+	  if (gNumMCUSRemainingY > 0)
+		  gNumMCUSRemainingX = gMaxMCUSPerRow;
+   }
    
    return 0;
 }

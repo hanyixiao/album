@@ -14,5 +14,5 @@ typedef struct
 
 void jpeg_display(uint16_t startx, uint16_t starty, jpeg_image_t *jpeg);
 jpeg_image_t *pico_jpeg_decode(uint8_t *buf, uint32_t buf_len);
-uint8_t *pjpeg_load_from_file(uint8_t *buf, uint32_t buf_len, int *x, int *y, int *comps, pjpeg_scan_type_t *pScan_type, int reduce, uint8_t rgb565, uint8_t *pixels, int *err);
+// uint8_t *pjpeg_load_from_file(uint8_t *buf, uint32_t buf_len, int *x, int *y, int *comps, pjpeg_scan_type_t *pScan_type, int reduce, uint8_t rgb565, uint8_t *pixels, int *err);
 #endif

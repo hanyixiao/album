@@ -1216,8 +1216,9 @@ STBIDEF stbi_uc *stbi_load_from_file(FIL *f, int *x, int *y, int *comp, int req_
    unsigned char *result;
    stbi__context s;
    stbi__start_file(&s,f);
+
    result = stbi__load_and_postprocess_8bit(&s,x,y,comp,req_comp);
-  // printf("[INFO] s.imgbuf len%d\n",-(int)(s.img_buffer_end - s.img_buffer));
+   // printf("[INFO] s.imgbuf len%ld\n",(s.img_buffer_original_end-s.img_buffer_original));
    if (result) {
       // need to 'unget' all the characters in the IO buffer
       f_lseek(f, -(int) (s.img_buffer_end - s.img_buffer));

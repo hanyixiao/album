@@ -4,7 +4,6 @@
 #ifndef PICOJPEG_H
 #define PICOJPEG_H
 
-/* clang-format off */
 #ifdef __cplusplus
 extern "C" {
 #endif

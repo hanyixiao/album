@@ -144,7 +144,7 @@ uint8 *pjpeg_load_from_file(uint8_t *buf, uint32_t buf_len, int *x, int *y, int 
       one_color_size = 2;
    else // grayscale or RGB888
       one_color_size = image_info.m_comps;
-
+   printf("[INFO]:one color size is %d\n",one_color_size);
    row_pitch = decoded_width * one_color_size;
    if (pixels == NULL)
    {

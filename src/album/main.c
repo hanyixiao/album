@@ -38,7 +38,7 @@
 #include "stb_image.h"
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image_resize.h"
-
+#include "stb_jpg_load.h"
 /**
  *  lcd_cs	    36
  *  lcd_rst	37
@@ -151,14 +151,17 @@ FRESULT sd_read_img(TCHAR *path,uint8_t *src_img,int len)
     uint32_t v_ret_len;
     if((ret=f_open(&file,path,FA_READ))==FR_OK)
     {
+        printf("byte of file %lld\n",f_size(&file));
         ret = f_read(&file,(void *)src_img,len,&v_ret_len);
         if(ret !=FR_OK)
         {
             printf("[ERROR]:read file error\n");
+          
         }
         else 
         {
             //printf("[INFO]:read file is %s",src_img);
+           
         }
         f_close(&file);
     }
@@ -210,41 +213,40 @@ int main(void)
         lcd_clear(WHITE);
         lcd_draw_string(LCD_X_MAX/2,LCD_Y_MAX/2-40,"GC0328 Init",RED);
         msleep(200);
+
         printf("[INFO]:begin to read jpeg\n");
         uint64_t tm= sysctl_get_time_us();
         uint8_t *img=(uint8_t *)malloc(43756);
         sd_read_img("0:deshakase.jpg",img,43756);   
-        jpeg_image_t *jpeg = pico_jpeg_decode(img,43756);
-        printf("[INFO]:decode use time %ld ms\n",(sysctl_get_time_us()-tm)/1000);
-        lcd_rgb_draw(0,0,320,240,jpeg->img_data);
+
+        uint8_t *pImage;
+        int width,height,channel;
+        pjpeg_scan_type_t scan_type;
+        printf("[INFO]:pjpeg_load_from_file\n");
+        pImage=my_pjpeg_load_from_file("0:deshakase.jpg",&width,&height,&channel,1,&scan_type,0);
+        printf("[INFO]:width%d height%d channel %d\n",width,height,channel);
+        lcd_rgb_draw(0,0,width,height,pImage);
         msleep(5000);
         printf("[info]:test the code \n");
         /* system start */
         printf("system start\r\n");
         msleep(200);
-        free(jpeg->img_data);
-        free(jpeg);
+        free(pImage);
+        int number=0;
         while (1)
         {
-            int img_width,img_height,img_channel;
-            static int number=0;
+            uint8_t *pImage;
+            int width,height,channel;
             char img_name[1024];
-            lcd_clear(BLACK);
             sprintf(img_name,"0:img%d.jpg",number);
-            uint8_t *stbi_img=stbi_load(img_name,&img_width,&img_height,&img_channel,3);
-            printf("[INFO]:img_read width%d height%d channel%d\n",img_width,img_height,img_channel);
-            int re_width=320,re_height=240;
-            stbi_uc *resize_img=malloc(re_width*re_height*3);
-            stbir_resize_uint8(stbi_img,img_width,img_height,0,resize_img,re_width,re_height,0,img_channel);
-            uint8_t *stbi_img2=stbi_888_to_565(resize_img,re_width,re_height);
-            lcd_draw_picture(0,0,re_width,re_height,(uint32_t *)stbi_img2);
-            msleep(5000);
-            stbi_image_free(stbi_img);
-            free(resize_img);
-            stbi_image_free(stbi_img2);
+            pjpeg_scan_type_t scan_type;
+            printf("[INFO]:pjpeg_load_from_file\n");
+            pImage=my_pjpeg_load_from_file(img_name,&width,&height,&channel,1,&scan_type,0);
+            printf("[INFO]:width%d height%d channel %d\n",width,height,channel);
+            lcd_rgb_draw(0,0,width,height,pImage);
+            free(pImage);
             number++;
-            if(number==10) number=0; 
-          
+            if(number==7) number=0; 
         }
     }
     while (1)

@@ -6,6 +6,10 @@
         "limits.h": "c",
         "stdint.h": "c",
         "cstdint": "c",
-        "lcd.h": "c"
+        "lcd.h": "c",
+        "ff.h": "c",
+        "stb_jpg_load.h": "c",
+        "assert.h": "c",
+        "picojpeg.h": "c"
     }
 }

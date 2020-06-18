@@ -4,6 +4,9 @@
 > 实现功能：移植开源项目　https://github.com/nothings/stb　stbi_image.h &stbi_image_resize.h
 > 具体实现将stbi_image.h中的图片读取流从标准的fread,fopen,fclose,更改为ff.h中的f_read,f_open,f_close();
 > 并实现了rgb888->rgb565的图片流转换
+> 版本v1.1.0
+> 实现功能：移植开源项目　https://github.com/richgel999/picojpeg
+> 具体工作为将picojpeg.c　picojpeg.h添加到项目中，增加接口封装stb_jpg_load.c实现读取sd卡内图片jpeg功能
 
 ### 1.硬件
 硬件系统为k210开发板Sipeed_MAIX_DOCK，摄像头为gc0328,lcd 分辨率为320*240:
@@ -37,3 +40,14 @@ kflash --help
 ```shell
 kflash -p /dev/ttyUSB0 -b 1500000 album.bin
 ```
+###　4.展示效果
+烧录程序之后，会轮流播放sd 卡根目录下的图片img1-6.jpg
+
+
+
+![](img/img1.jpg)
+![](img/img2.jpg)
+![](img/img3.jpg)
+![](img/img4.jpg)
+![](img/img5.jpg)
+![](img/img6.jpg)
